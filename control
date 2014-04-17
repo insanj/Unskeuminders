@@ -1,0 +1,11 @@
+Package: com.insanj.unskeuminders
+Name: Unskeuminders
+Pre-Depends: firmware (>= 7.0)
+Depends: mobilesubstrate
+Version: 0.1
+Architecture: iphoneos-arm
+Description: A more tolerable Reminders
+	A more tolerable Reminders, and a testable to tweak names.
+Maintainer: Julian Weiss <insanjmail@insanj.com>
+Author: Julian (insanj) Weiss
+Section: Tweaks
