@@ -1,47 +1,12 @@
-#import <UIKit/UIKit.h>
+#import "Unskeuminders.h"
+#define EVIL_MODE YES
 
-@interface RemindersCardBackgroundView : UIView
-+ (id)roundedTextureImage;
--(void)useScrollingTexture:(BOOL)arg1;
-@end
-
-@interface RemindersScrollingBackgroundView : UIView
-+ (id)kitPaperTextureImage;
--(void)setTextureImage:(id)arg1;
-@end
-
-@interface _UIResizableImage : UIImage
-
-+ (BOOL)supportsSecureCoding;
-
-- (void)_configureFromImage:(id)arg1;
-- (CGRect)_contentInsetsInPixels:(UIEdgeInsets)arg1 emptySizeFallback:(id)arg2;
-- (CGRect)_contentRectInPixels;
-- (CGRect)_contentStretchInPixels;
-- (id)_initWithOtherImage:(id)arg1;
-- (BOOL)_isResizable;
-- (BOOL)_isSubimage;
-- (BOOL)_isTiledWhenStretchedToSize:(CGSize)arg1;
-- (id)_resizableImageWithCapMask:(int)arg1;
-- (void)_setAlwaysStretches:(BOOL)arg1;
-- (void)_setCapInsets:(UIEdgeInsets)arg1;
-- (void)_setSubimageInsets:(UIEdgeInsets)arg1;
-- (BOOL)_suppressesAccessibilityHairlineThickening;
-- (UIEdgeInsets)capInsets;
-- (void)encodeWithCoder:(id)arg1;
-- (id)initWithCoder:(id)arg1;
-- (id)initWithImage:(id)arg1 capInsets:(UIEdgeInsets)arg2;
-- (int)resizingMode;
-@end
-
-// static BOOL unskeuShouldRoundCorners;
+%group Good
 
 %hook RemindersCardBackgroundView
 
 -(void)useScrollingTexture:(BOOL)arg1 {
-//    unskeuShouldRoundCorners = YES;
     %orig(YES);
-//    unskeuShouldRoundCorners = NO;
 }
 
 %end
@@ -51,33 +16,53 @@
 + (id)kitPaperTextureImage {
     _UIResizableImage *original = %orig();
     CGRect rect = (CGRect){CGPointZero, original.size};
-
-/*    if (unskeuShouldRoundCorners) {
-        //CGRect rect = (CGRect){CGPointZero, (CGSize){283.0, 283.0}};
-        UIGraphicsBeginImageContextWithOptions(rect.size, NO, 0.0);
-        CGContextRef context = UIGraphicsGetCurrentContext();
-        [[UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:4.0] addClip];
-        [[UIColor whiteColor] setFill];
-        CGContextFillRect(context, rect);
-        CGContextSetShadowWithColor(context, (CGSize){0.0, -3.0}, 20.0, [UIColor blackColor].CGColor);
-        replacement = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-    }
-*/
-
-//    else {
-        UIGraphicsBeginImageContextWithOptions(rect.size, NO, 0.0);
-        CGContextRef context = UIGraphicsGetCurrentContext();
-        [[UIColor whiteColor] setFill];
-        CGContextFillRect(context, rect);
-        UIImage *replacement = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-//    }
-
-    // _UIResizableImage *resizable = [[%c(_UIResizableImage) alloc] initWithImage:replacement capInsets:original.capInsets];
-    // [resizable _setAlwaysStretches:YES];
+    UIGraphicsBeginImageContextWithOptions(rect.size, NO, 0.0);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    [[UIColor whiteColor] setFill];
+    CGContextFillRect(context, rect);
+    UIImage *replacement = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
 
     return replacement;
 }
 
 %end
+
+%end // %group Good
+
+%ctor {
+    if (!EVIL_MODE) {
+        %init(Good);
+    }
+
+    // Don't have permissions, but it's a good idea in theory...
+    else {
+    	CGRect rect = (CGRect){CGPointZero, (CGSize){240.0, 240.0}};
+    	UIGraphicsBeginImageContextWithOptions(rect.size, NO, 0.0);
+    	CGContextRef context = UIGraphicsGetCurrentContext();
+    	[[UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:18.0] addClip];
+    	[[UIColor whiteColor] setFill];
+    	CGContextFillRect(context, rect);
+    	UIImage *replacement = UIGraphicsGetImageFromCurrentImageContext();
+    	UIGraphicsEndImageContext();
+
+    	UIImageView *shadower = [[UIImageView alloc] initWithFrame:CGRectMake(0.0, 0.0, 283.0, 283.0)];
+    	shadower.image = replacement;
+    	shadower.contentMode = UIViewContentModeCenter;
+    	shadower.layer.shadowColor = [UIColor blackColor].CGColor;
+    	shadower.layer.shadowOffset = CGSizeMake(0.0, -1.0);
+    	shadower.layer.shadowOpacity = 0.5;
+
+    	UIGraphicsBeginImageContextWithOptions(shadower.frame.size, NO, 0.0);
+        [shadower.layer renderInContext:UIGraphicsGetCurrentContext()];
+        UIImage *compound = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+
+        NSString *texturePath = @"/Applications/Reminders.app/RemindersCard@2x~iphone.png";
+        NSError *error;
+        BOOL success = [[NSFileManager defaultManager] removeItemAtPath:texturePath error:&error];
+
+        [UIImagePNGRepresentation(compound) writeToFile:texturePath atomically:YES];
+        NSLog(@"[Unskeuminders] Tried to write %@ to path %@, success: %@, error: %@", compound, texturePath, success ? @"YES" : @"NO", error);
+    }
+}

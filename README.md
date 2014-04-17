@@ -1,7 +1,7 @@
 Unskeuminders
 =======================
 
-A more tolerable Reminders, and a testable to tweak names.
+A more tolerable Reminders, and a testament to tweak names.
 
 ---------------------------------------
 [Creative Commons Attribution-NonCommercial 3.0 United States License](http://creativecommons.org/licenses/by-nc/3.0/us/) as of 2014:
